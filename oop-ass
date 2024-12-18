@@ -1,0 +1,213 @@
+
+
+using System;
+using System.Collections.Generic;
+
+namespace LibraryManagementSystem
+{
+    // Book Class
+    public class Book
+    {
+        public string Title { get; set; }
+        public string Author { get; set; }
+        public string ISBN { get; set; }
+        public bool Availability { get; set; } // true if available, false if borrowed
+
+        public Book(string title, string author, string isbn)
+        {
+            Title = title;
+            Author = author;
+            ISBN = isbn;
+            Availability = true; // Book is available by default
+        }
+
+        public void GetBookDetails()
+        {
+            Console.WriteLine($"Title: {Title}");
+            Console.WriteLine($"Author: {Author}");
+            Console.WriteLine($"ISBN: {ISBN}");
+            Console.WriteLine($"Availability: {(Availability ? "Available" : "Not Available")}");
+        }
+
+        public void MarkAsBorrowed()
+        {
+            Availability = false;
+        }
+
+        public void MarkAsReturned()
+        {
+            Availability = true;
+        }
+    }
+
+    // Member Class
+    public class Member
+    {
+        public string MemberID { get; set; }
+        public string Name { get; set; }
+        public string Phone { get; set; }
+
+        public Member(string memberID, string name, string phone)
+        {
+            MemberID = memberID;
+            Name = name;
+            Phone = phone;
+        }
+
+        public void GetMemberDetails()
+        {
+            Console.WriteLine($"Member ID: {MemberID}");
+            Console.WriteLine($"Name: {Name}");
+            Console.WriteLine($"Phone: {Phone}");
+        }
+
+        public bool CanBorrow(int borrowedBooksCount)
+        {
+            // Example rule: A member can borrow a maximum of 3 books
+            return borrowedBooksCount < 3;
+        }
+    }
+
+    // Enum for TransactionType
+    public enum TransactionType
+    {
+        Borrow,
+        Return
+    }
+
+    // Transaction Class
+    public class Transaction
+    {
+        public string TransactionID { get; set; }
+        public string MemberID { get; set; }
+        public string BookISBN { get; set; }
+        public TransactionType TransactionType { get; set; }
+        public DateTime TransactionDate { get; set; }
+
+        public Transaction(string transactionID, string memberID, string bookISBN, TransactionType transactionType)
+        {
+            TransactionID = transactionID;
+            MemberID = memberID;
+            BookISBN = bookISBN;
+            TransactionType = transactionType;
+            TransactionDate = DateTime.Now;
+        }
+
+        public void DisplayTransaction()
+        {
+            Console.WriteLine($"Transaction ID: {TransactionID}");
+            Console.WriteLine($"Member ID: {MemberID}");
+            Console.WriteLine($"Book ISBN: {BookISBN}");
+            Console.WriteLine($"Transaction Type: {TransactionType}");
+            Console.WriteLine($"Transaction Date: {TransactionDate}");
+        }
+    }
+
+    // Library Class
+    public class Library
+    {
+        public List<Book> Books { get; set; }
+        public List<Member> Members { get; set; }
+        public List<Transaction> Transactions { get; set; }
+
+        public Library()
+        {
+            Books = new List<Book>();
+            Members = new List<Member>();
+            Transactions = new List<Transaction>();
+        }
+
+        public void AddBook(Book book)
+        {
+            Books.Add(book);
+            Console.WriteLine($"Book '{book.Title}' added to the library.");
+        }
+
+        public void AddMember(Member member)
+        {
+            Members.Add(member);
+            Console.WriteLine($"Member '{member.Name}' added to the library.");
+        }
+
+        public void BorrowBook(Member member, Book book)
+        {
+            if (book.Availability && member.CanBorrow(GetBorrowedBooksCount(member)))
+            {
+                book.MarkAsBorrowed();
+                string transactionID = Guid.NewGuid().ToString();
+                Transaction transaction = new Transaction(transactionID, member.MemberID, book.ISBN, TransactionType.Borrow);
+                Transactions.Add(transaction);
+                Console.WriteLine($"Book '{book.Title}' borrowed by {member.Name}.");
+                transaction.DisplayTransaction();
+            }
+            else
+            {
+                Console.WriteLine($"Book '{book.Title}' is not available or the member cannot borrow more books.");
+            }
+        }
+
+        public void ReturnBook(Member member, Book book)
+        {
+            if (!book.Availability)
+            {
+                book.MarkAsReturned();
+                string transactionID = Guid.NewGuid().ToString();
+                Transaction transaction = new Transaction(transactionID, member.MemberID, book.ISBN, TransactionType.Return);
+                Transactions.Add(transaction);
+                Console.WriteLine($"Book '{book.Title}' returned by {member.Name}.");
+                transaction.DisplayTransaction();
+            }
+            else
+            {
+                Console.WriteLine($"Book '{book.Title}' was not borrowed.");
+            }
+        }
+
+        private int GetBorrowedBooksCount(Member member)
+        {
+            int count = 0;
+            foreach (var transaction in Transactions)
+            {
+                if (transaction.MemberID == member.MemberID && transaction.TransactionType == TransactionType.Borrow)
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+    }
+
+    // Main Program
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Create library instance
+            Library library = new Library();
+
+            // Create books and members
+            Book book1 = new Book("The Great Gatsby", "F. Scott Fitzgerald", "123456");
+            Book book2 = new Book("1984", "George Orwell", "654321");
+            Member member1 = new Member("M001", "John Doe", "123-456-7890");
+            Member member2 = new Member("M002", "Jane Smith", "987-654-3210");
+
+            // Add books and members to the library
+            library.AddBook(book1);
+            library.AddBook(book2);
+            library.AddMember(member1);
+            library.AddMember(member2);
+
+            // Display details
+            book1.GetBookDetails();
+            member1.GetMemberDetails();
+
+            // Borrow books
+            library.BorrowBook(member1, book1);
+            library.BorrowBook(member2, book2);
+
+            // Return books
+            library.ReturnBook(member1, book1);
+        }
+    }
+}
+```
